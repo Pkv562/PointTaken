@@ -270,7 +270,7 @@ int main() {
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htson(PORT);
+    address.sin_port = htons(PORT);
 
     if(bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
@@ -291,7 +291,7 @@ int main() {
     }
 
     printf("Player 1 connected!\n");
-    print("Waiting for player 2...\n");
+    printf("Waiting for player 2...\n");
 
     if((p2_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
         perror("accept");
@@ -299,7 +299,7 @@ int main() {
     }
 
     printf("Player 2 connected!\n");
-    print("Starting the game...\n");
+    printf("Starting the game...\n");
 
     initialize_game(&game);
 
@@ -315,7 +315,7 @@ int main() {
     close(p2_socket);
     close(server_fd);
 
-    print("Game over!\n");
+    printf("Game over!\n");
 
     return 0;
 

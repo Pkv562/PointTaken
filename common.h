@@ -98,11 +98,11 @@ typedef struct {
     char message[256];       
 } GameMessage;
 
-int sendMessage(int socket, GameMessage *msg) {
+int send_message(int socket, GameMessage *msg) {
     return send(socket, (const char*)msg, sizeof(GameMessage), 0);
 }
 
-int receivedMessage(int socket, GameMessage* msg) {
+int received_message(int socket, GameMessage* msg) {
     return recv(socket, (char*)msg, sizeof(GameMessage), 0);
 }
 
