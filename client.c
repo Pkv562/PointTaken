@@ -10,7 +10,7 @@ int select_card(GameMessage *msg) {
 
     while(1) {
         printf("\nSelect a card to play (1-%d): ", msg->hand_size);
-        if(scanf("%d",  &choice != 1)) {
+        if(scanf("%d",  &choice) != 1) {
             while(getchar() != '\n');
             printf("Invalid input. Please enter a number \n");
             continue;
