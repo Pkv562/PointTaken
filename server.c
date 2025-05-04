@@ -91,7 +91,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p1_msg.hand_size = game->p1_hand_size;
 
     for(int i = 0; i < game->p1_hand_size; i++) {
-        p1_msg.card[i] = game->p1_hand[i];
+        p1_msg.cards[i] = game->p1_hand[i];
     }
 
     p2_msg.type = CARD_SELECTION;
