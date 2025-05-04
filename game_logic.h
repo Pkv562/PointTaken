@@ -254,35 +254,5 @@ int resolve_cards(int p1_party, int p1_card, int p2_party, int p2_card) {
     return opinion_score + p2_effect;
 }
 
-void show_headline(int final_opinion, char *headlines, int buffer_size) {
-    const char *p1_winning_headlines[] = {
-        "LANDSLIDE VICTORY: Player 1 dominates the debate with compelling arguments!",
-        "MASTERFUL PERFORMANCE: Player 1 leaves opponent speechless in historic debate!",
-        "DEBATE CHAMPION: Player 1's rhetoric proves unbeatable in political showdown!"
-    };
-    
-    const char *p2_winning_headlines[] = {
-        "STUNNING UPSET: Player 2 overwhelms opponent in remarkable debate performance!",
-        "DECISIVE VICTORY: Player 2's arguments demolish rival in political face-off!",
-        "DEBATE DOMINANCE: Player 2 emerges triumphant in battle of wits and words!"
-    };
-    
-    const char *draw_headlines[] = {
-        "DEADLOCK: Historic debate ends in unprecedented tie as neither side gives ground!",
-        "STANDOFF: Evenly matched debaters battle to a draw in political showdown!",
-        "PHOTO FINISH: Debate ends with voters split exactly down the middle!"
-    };
-
-    int index = rand() % 3;
-
-    if(final_opinion >= 75) {
-        snprintf(headlines, buffer_size, "%s", p1_winning_headlines[index])
-    } else if (final_opinion <= 25) {
-        snprintf(headline, buffer_size, "%s", p2_winning_headlines[index]);
-    } else {
-        snprintf(headline, buffer_size, "%s", draw_headlines[index]);
-    }
-
-}
 
 #endif

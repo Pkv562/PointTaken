@@ -3,49 +3,6 @@
 
 void display_party_info(int party) {
     printf("\nYou are playing as: %s\n", PartyNames[party]);
-    
-    printf("Party Effects:\n");
-    switch (party) {
-        case PARTIDO_BAYANIHAN:
-            printf("- Public opinion penalties from any counter is reduced by 50%%\n");
-            printf("- Gains only 75%% of the score when using aggressive cards\n");
-            break;
-            
-        case LAKAS_NG_MASA:
-            printf("- \"Attack\" and \"Attack Opponent\" gain an extra +5%% boost\n");
-            printf("- Takes an extra -5%% when a move is countered\n");
-            break;
-            
-        case PARTIDO_KALIKASAN:
-            printf("- \"Appeal to Emotion\" and \"Personal Story\" gain an extra +5%% score\n");
-            printf("- The \"Use statistic\" is 50%% less effective\n");
-            break;
-            
-        case MAKABAGONG_TEKNOLOHIYA:
-            printf("- \"Use Statistic\" is only half countered (still gives around +7%%)\n");
-            printf("- When used increase the score by 50%%\n");
-            printf("- \"Appeal to emotion\" and \"Personal Story\" has no effect\n");
-            break;
-            
-        case TAHIMIK_NA_SIGAW:
-            printf("- \"Stay silent\" and \"Change topic\" grant a bonus +5%% when used\n");
-            printf("- Can only use \"Attack\" or \"Attack Opponent\" once per game\n");
-            break;
-    }
-}
-
-void display_card_effects() {
-    printf("\nCard Effects:\n");
-    printf("- Appeal to Emotion: +10%% (countered by Fact Check)\n");
-    printf("- Use Statistics: +15%% (countered by Distrust Data)\n");
-    printf("- Attack Opponent: +5%% (countered by Defend, Fact Check)\n");
-    printf("- Change Topic: Nullifies opponent's move this round\n");
-    printf("- Personal Story: +8%% (immune to Attack or Distrust Data)\n");
-    printf("- Distrust Data: Cancels \"Use Statistics\"; -3%% if used alone\n");
-    printf("- Fact Check: Nullifies \"Appeal to Emotion\" or \"Attack\"; +5%% if opponent used those\n");
-    printf("- Attack: +6%% (countered by Defend, Fact Check)\n");
-    printf("- Defend: Cancels \"Attack\" or \"Attack Opponent\"\n");
-    printf("- Stay Silent: +3%% if opponent uses \"Attack\" or \"Attack Opponent\"\n");
 }
 
 
@@ -117,8 +74,6 @@ int main(int argc, char *argv[]) {
                 printf("\n%s\n", msg.message);
 
                 display_party_info(msg.party);
-
-                display_card_effects();
 
                 printf("\nInitial Public Opinion:\n");
                 display_opinion_bar(msg.public_opinion);
