@@ -106,8 +106,8 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     send_message(p1_socket, &p1_msg);
     send_message(p1_socket, &p2_msg);
 
-    receivedMessage(p1_socket, &p1_msg);
-    receivedMessage(p1_socket, &p2_msg);
+    received_message(p1_socket, &p1_msg);
+    received_message(p1_socket, &p2_msg);
 
     game->p1_selected_card = p1_msg.selected_card;
     game->p2_selected_card = p2_msg.selected_card;
