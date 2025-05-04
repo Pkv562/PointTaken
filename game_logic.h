@@ -140,6 +140,7 @@ int resolve_cards(int p1_party, int p1_card, int p2_party, int p2_card) {
 
         case PERSONAL_STORY:
             opinion_score += 8;
+            break;
 
         case DISTRUST_DATA:
             if(p2_card == USE_STATISTICS) {

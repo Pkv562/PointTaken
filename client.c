@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     while(!game_over) {
         
-        if(receivedMessage(sock, &msg) <= 0) {
+        if(received_message(sock, &msg) <= 0) {
             printf("Error receiving message from server. \n");
             break;
         }
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
                 game_over = 1;
                 break;
                 
-            case MSG_ERROR:
+            case ERROR:
                 printf("\nERROR: %s\n", msg.message);
                 break;
                 
