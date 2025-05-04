@@ -248,8 +248,8 @@ int resolve_cards(int p1_party, int p1_card, int p2_party, int p2_card) {
             break;
     }
 
-    opinion_score = party_effects(p1_party, p1_card, p2_party, p2_card, opinion_score);
-    p2_effect = party_effects(p2_party, p2_card, p1_party, p1_card, p2_effect);
+    opinion_score = party_effects(p1_party, p1_card, p2_card, opinion_score);
+    p2_effect = party_effects(p2_party, p2_card, p1_card, p2_effect);
 
     return opinion_score + p2_effect;
 }
