@@ -5,7 +5,6 @@ void display_party_info(int party) {
     printf("\nYou are playing as: %s\n", PartyNames[party]);
 }
 
-
 void select_card(GameMessage *msg) {
     int choice;
 

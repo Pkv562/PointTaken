@@ -245,23 +245,6 @@ void send_game_over(GameState* game, int p1_socket, int p2_socket) {
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.game_over = 1;
 
-    if (game->public_opinion > 50) {
-        sprintf(p1_msg.message, "Game Over! You won with %d%% public opinion", 
-                game->public_opinion);
-        sprintf(p2_msg.message, "Game Over! You lost with %d%% public opinion", 
-                100 - game->public_opinion);
-    } else if (game->public_opinion < 50) {
-        sprintf(p1_msg.message, "Game Over! You lost with %d%% public opinion", 
-                game->public_opinion);
-        sprintf(p2_msg.message, "Game Over! You won with %d%% public opinion" 
-                100 - game->public_opinion);
-    } else {
-        sprintf(p1_msg.message, "Game Over! It's a tie at 50%% public opinion" 
-                );
-        sprintf(p2_msg.message, "Game Over! It's a tie at 50%% public opinion" 
-                );
-    }
-
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
 

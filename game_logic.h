@@ -254,5 +254,4 @@ int resolve_cards(int p1_party, int p1_card, int p2_party, int p2_card) {
     return opinion_score + p2_effect;
 }
 
-
 #endif

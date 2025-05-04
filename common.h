@@ -9,8 +9,6 @@
 #include <sys/socket.h> 
 #include <netinet/in.h>
 #include <time.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
 #define PORT 6969
 #define BUFFER_SIZE 1024
