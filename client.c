@@ -5,10 +5,10 @@ void display_party_info(int party) {
     printf("\nYou are playing as: %s\n", PartyNames[party]);
 }
 
-void select_card(GameMessage *msg) {
+int select_card(GameMessage *msg) {
     int choice;
 
-    while(true) {
+    while(1) {
         printf("\nSelect a card to play (1-%d): ", msg->hand_size);
         if(scanf("%d",  &choice != 1)) {
             while(getchar() != '\n');
