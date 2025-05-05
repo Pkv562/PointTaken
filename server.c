@@ -2,6 +2,8 @@
 #include "game_logic.h"
 #include <string.h>
 
+#define INFO_MSG 99  // Ensure this matches client-side INFO_MSG if any enum exists
+
 typedef struct {
     int deck[DECK];
     int deck_size;
@@ -22,7 +24,6 @@ typedef struct {
 } GameState;
 
 static const char* get_headline(int public_opinion) {
-    // Generate headline based on final public opinion
     if(public_opinion >= MAX_OPINION) {
         return "Public Opinion sways dramatically! A sweeping victory!";
     } else if (public_opinion <= MIN_OPINION) {
@@ -32,21 +33,16 @@ static const char* get_headline(int public_opinion) {
     }
 }
 
-// Additional message for card effects and party effects display at game start
 static void append_effects_message(GameMessage* msg, int party) {
     char effects_msg[256] = "";
-    // Assume example text for party effects and card effects:
     sprintf(effects_msg, "Party: %s. Effects: %s", PartyNames[party],
         (party == TAHIMIK_NA_SIGAW) ? "Can only Attack once per round." : "Standard party effects apply.");
-    // Add card effect descriptions statically for demonstration
     strcat(effects_msg, " Card effects: ATTACK decreases opponent public opinion, DEFEND protects opinion.");
-    // Append to existing message with newline separation
     strcat(msg->message, "\n");
     strcat(msg->message, effects_msg);
 }
 
 void initialize_game(GameState *game) {
-    
     srand(time(NULL));
 
     create_deck(game->deck, &game->deck_size);
@@ -68,11 +64,10 @@ void initialize_game(GameState *game) {
     game->p2_has_attacked = 0;
     game->p1_attacked = 0;
     game->p2_attacked = 0;
-
 }
 
 void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
-    GameMessage p1_msg, p2_msg;
+    GameMessage p1_msg = {0}, p2_msg = {0};
 
     p1_msg.type = START_INIT;
     p1_msg.party = game->p1_party;
@@ -108,21 +103,19 @@ void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
 
 // Helper to send locked in message to opponent
 static void send_locked_in_indicator(int socket) {
-    GameMessage msg;
-    memset(&msg, 0, sizeof(msg));
+    GameMessage msg = {0};
     msg.type = INFO_MSG;
-    sprintf(msg.message, "Your opponent has locked in their card.");
+    snprintf(msg.message, sizeof(msg.message), "Your opponent has locked in their card.");
     send_message(socket, &msg);
 }
 
 void process_round(GameState * game, int p1_socket, int p2_socket) {
-    GameMessage p1_msg, p2_msg;
+    GameMessage p1_msg = {0}, p2_msg = {0};
 
     p1_msg.type = CARD_SELECTION;
     p1_msg.public_opinion = game->public_opinion;
     p1_msg.round = game->round;
     p1_msg.hand_size = game->p1_hand_size;
-
     for(int i = 0; i < game->p1_hand_size; i++) {
         p1_msg.cards[i] = game->p1_hand[i];
     }
@@ -131,7 +124,6 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.hand_size = game->p2_hand_size;
-
     for(int i = 0; i < game->p2_hand_size; i++) {
         p2_msg.cards[i] = game->p2_hand[i];
     }
@@ -139,17 +131,13 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
 
-    // Receive player 1 selection
     received_message(p1_socket, &p1_msg);
-    // Notify player 2 that player 1 has locked in
-    send_locked_in_indicator(p2_socket);
+    send_locked_in_indicator(p2_socket); // notify player 2 after player 1 locks in
 
-    // Receive player 2 selection
     received_message(p2_socket, &p2_msg);
-    // Notify player 1 that player 2 has locked in
-    send_locked_in_indicator(p1_socket);
+    send_locked_in_indicator(p1_socket); // notify player 1 after player 2 locks in
 
-    // Validate selected card indices to avoid invalid selections
+    // Validate selected card indices
     if(p1_msg.selected_card < 0 || p1_msg.selected_card >= game->p1_hand_size) {
         p1_msg.selected_card = rand() % game->p1_hand_size;
     }
@@ -162,28 +150,22 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
 
     if(game->p1_party == TAHIMIK_NA_SIGAW) {
         if((game->p1_hand[game->p1_selected_card] == ATTACK || game->p1_hand[game->p1_selected_card] == ATTACK_OPPONENT)
-    && game->p1_has_attacked) {
+        && game->p1_has_attacked) {
             do {
                 game->p1_selected_card = rand() % game->p1_hand_size;
-            }
-            while (game->p1_hand[game->p1_selected_card] == ATTACK || game->p1_hand[game->p1_selected_card] == ATTACK_OPPONENT);
-
-        }
-        else if(game->p1_hand[game->p1_selected_card] == ATTACK || game->p1_hand[game->p1_selected_card] == ATTACK_OPPONENT) {
+            } while (game->p1_hand[game->p1_selected_card] == ATTACK || game->p1_hand[game->p1_selected_card] == ATTACK_OPPONENT);
+        } else if(game->p1_hand[game->p1_selected_card] == ATTACK || game->p1_hand[game->p1_selected_card] == ATTACK_OPPONENT) {
             game->p1_has_attacked = 1;
         }
     }
 
     if(game->p2_party == TAHIMIK_NA_SIGAW) {
         if((game->p2_hand[game->p2_selected_card] == ATTACK || game->p2_hand[game->p2_selected_card] == ATTACK_OPPONENT)
-    && game->p2_has_attacked) {
+        && game->p2_has_attacked) {
             do {
                 game->p2_selected_card = rand() % game->p2_hand_size;
-            }
-            while (game->p2_hand[game->p2_selected_card] == ATTACK || game->p2_hand[game->p2_selected_card] == ATTACK_OPPONENT);
-
-        }
-        else if(game->p2_hand[game->p2_selected_card] == ATTACK || game->p2_hand[game->p2_selected_card] == ATTACK_OPPONENT) {
+            } while (game->p2_hand[game->p2_selected_card] == ATTACK || game->p2_hand[game->p2_selected_card] == ATTACK_OPPONENT);
+        } else if(game->p2_hand[game->p2_selected_card] == ATTACK || game->p2_hand[game->p2_selected_card] == ATTACK_OPPONENT) {
             game->p2_has_attacked = 1;
         }
     }
@@ -205,24 +187,21 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     );
 
     game->public_opinion += opinion_change;
+    if(game->public_opinion < MIN_OPINION) game->public_opinion = MIN_OPINION;
+    if(game->public_opinion > MAX_OPINION) game->public_opinion = MAX_OPINION;
 
-    if(game->public_opinion < MIN_OPINION) {
-        game->public_opinion = MIN_OPINION;
-    }
-    else if(game->public_opinion > MAX_OPINION) {
-        game->public_opinion = MAX_OPINION;
-    }
-
+    // Remove played cards from hands
     for(int i = game->p1_selected_card; i < game->p1_hand_size - 1; i++) {
-        game->p1_hand[i] = game->p1_hand[i+1];
+        game->p1_hand[i] = game->p1_hand[i + 1];
     }
     game->p1_hand_size--;
 
     for(int i = game->p2_selected_card; i < game->p2_hand_size - 1; i++) {
-        game->p2_hand[i] = game->p2_hand[i+1];
+        game->p2_hand[i] = game->p2_hand[i + 1];
     }
     game->p2_hand_size--;
 
+    // Draw new cards if deck has cards
     if(game->deck_size > 0) {
         game->p1_hand[game->p1_hand_size++] = draw_cards(game->deck, &game->deck_size);
     }
@@ -236,54 +215,40 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p1_msg.round = game->round;
     p1_msg.opinion_change = opinion_change;
     p1_msg.hand_size = game->p1_hand_size;
-
     for(int i = 0; i < game->p1_hand_size; i++) {
         p1_msg.cards[i] = game->p1_hand[i];
     }
-
-    sprintf(p1_msg.message, "Round %d complete. Public Opinion changed by %d%%.",
-    game->round, opinion_change);
+    snprintf(p1_msg.message, sizeof(p1_msg.message),
+        "Round %d complete. Public Opinion changed by %d%%.",
+        game->round, opinion_change);
 
     p2_msg.type = ROUND_RESULT;
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.opinion_change = -opinion_change;
     p2_msg.hand_size = game->p2_hand_size;
-
     for(int i = 0; i < game->p2_hand_size; i++) {
         p2_msg.cards[i] = game->p2_hand[i];
     }
-
-    sprintf(p2_msg.message, "Round %d complete. Public Opinion changed by %d%%.",
-    game->round, opinion_change);
+    snprintf(p2_msg.message, sizeof(p2_msg.message),
+        "Round %d complete. Public Opinion changed by %d%%.",
+        game->round, opinion_change);
 
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
 
     game->round++;
-
 }
 
 int check_game_over(GameState* game) {
-
-    if(game->public_opinion <= MIN_OPINION || game->public_opinion >= MAX_OPINION) {
-        return 1;
-    }
-
-    if(game->round == MAX_ROUNDS) {
-        return 1;
-    }
-
-    if(game->deck_size == 0 && game->p1_hand_size == 0 && game->p2_hand_size == 0) {
-        return 1;
-    }
-
+    if(game->public_opinion <= MIN_OPINION || game->public_opinion >= MAX_OPINION) return 1;
+    if(game->round == MAX_ROUNDS) return 1;
+    if(game->deck_size == 0 && game->p1_hand_size == 0 && game->p2_hand_size == 0) return 1;
     return 0;
 }
 
 void send_game_over(GameState* game, int p1_socket, int p2_socket) {
-    GameMessage p1_msg, p2_msg;
-
+    GameMessage p1_msg = {0}, p2_msg = {0};
     const char* headline = get_headline(game->public_opinion);
 
     p1_msg.type = GAME_OVER;
@@ -303,7 +268,6 @@ void send_game_over(GameState* game, int p1_socket, int p2_socket) {
 }
 
 int main() {
-
     int server_fd, p1_socket, p2_socket;
     struct sockaddr_in address;
     int opt = 1;
