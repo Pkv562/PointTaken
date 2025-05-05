@@ -1,5 +1,6 @@
 #include "common.h"
 #include "game_logic.h"
+#include <string.h>
 
 typedef struct {
     int deck[DECK];
@@ -19,6 +20,30 @@ typedef struct {
     int p1_has_attacked;
     int p2_has_attacked;
 } GameState;
+
+static const char* get_headline(int public_opinion) {
+    // Generate headline based on final public opinion
+    if(public_opinion >= MAX_OPINION) {
+        return "Public Opinion sways dramatically! A sweeping victory!";
+    } else if (public_opinion <= MIN_OPINION) {
+        return "Defeat looms as Public Opinion crashes!";
+    } else {
+        return "A close and heated political debate concludes.";
+    }
+}
+
+// Additional message for card effects and party effects display at game start
+static void append_effects_message(GameMessage* msg, int party) {
+    char effects_msg[256] = "";
+    // Assume example text for party effects and card effects:
+    sprintf(effects_msg, "Party: %s. Effects: %s", PartyNames[party],
+        (party == TAHIMIK_NA_SIGAW) ? "Can only Attack once per round." : "Standard party effects apply.");
+    // Add card effect descriptions statically for demonstration
+    strcat(effects_msg, " Card effects: ATTACK decreases opponent public opinion, DEFEND protects opinion.");
+    // Append to existing message with newline separation
+    strcat(msg->message, "\n");
+    strcat(msg->message, effects_msg);
+}
 
 void initialize_game(GameState *game) {
     
@@ -61,6 +86,7 @@ void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
     }
 
     sprintf(p1_msg.message, "Welcome to Point Taken! You are playing as %s.", PartyNames[game->p1_party]);
+    append_effects_message(&p1_msg, game->p1_party);
 
     p2_msg.type = START_INIT;
     p2_msg.party = game->p2_party;
@@ -74,9 +100,19 @@ void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
     }
 
     sprintf(p2_msg.message, "Welcome to Point Taken! You are playing as %s.", PartyNames[game->p2_party]);
+    append_effects_message(&p2_msg, game->p2_party);
 
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
+}
+
+// Helper to send locked in message to opponent
+static void send_locked_in_indicator(int socket) {
+    GameMessage msg;
+    memset(&msg, 0, sizeof(msg));
+    msg.type = INFO_MSG;
+    sprintf(msg.message, "Your opponent has locked in their card.");
+    send_message(socket, &msg);
 }
 
 void process_round(GameState * game, int p1_socket, int p2_socket) {
@@ -103,8 +139,23 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
 
+    // Receive player 1 selection
     received_message(p1_socket, &p1_msg);
+    // Notify player 2 that player 1 has locked in
+    send_locked_in_indicator(p2_socket);
+
+    // Receive player 2 selection
     received_message(p2_socket, &p2_msg);
+    // Notify player 1 that player 2 has locked in
+    send_locked_in_indicator(p1_socket);
+
+    // Validate selected card indices to avoid invalid selections
+    if(p1_msg.selected_card < 0 || p1_msg.selected_card >= game->p1_hand_size) {
+        p1_msg.selected_card = rand() % game->p1_hand_size;
+    }
+    if(p2_msg.selected_card < 0 || p2_msg.selected_card >= game->p2_hand_size) {
+        p2_msg.selected_card = rand() % game->p2_hand_size;
+    }
 
     game->p1_selected_card = p1_msg.selected_card;
     game->p2_selected_card = p2_msg.selected_card;
@@ -211,7 +262,6 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
 
     game->round++;
 
-
 }
 
 int check_game_over(GameState* game) {
@@ -234,17 +284,22 @@ int check_game_over(GameState* game) {
 void send_game_over(GameState* game, int p1_socket, int p2_socket) {
     GameMessage p1_msg, p2_msg;
 
+    const char* headline = get_headline(game->public_opinion);
+
     p1_msg.type = GAME_OVER;
     p1_msg.public_opinion = game->public_opinion;
     p1_msg.game_over = 1;
+    strncpy(p1_msg.message, headline, sizeof(p1_msg.message)-1);
+    p1_msg.message[sizeof(p1_msg.message)-1] = 0;
 
     p2_msg.type = GAME_OVER;
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.game_over = 1;
+    strncpy(p2_msg.message, headline, sizeof(p2_msg.message)-1);
+    p2_msg.message[sizeof(p2_msg.message)-1] = 0;
 
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
-
 }
 
 int main() {
@@ -256,7 +311,7 @@ int main() {
     GameState game;
 
     if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Socked Failed");
+        perror("Socket Failed");
         exit(EXIT_FAILURE);
     }
 
@@ -315,6 +370,4 @@ int main() {
     printf("Game over!\n");
 
     return 0;
-
-
 }
