@@ -2,7 +2,7 @@
 #include "game_logic.h"
 #include <string.h>
 
-#define INFO_MSG 99  // Ensure this matches client-side INFO_MSG if any enum exists
+#define INFO_MSG 99
 
 typedef struct {
     int deck[DECK];
