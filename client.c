@@ -1,6 +1,8 @@
 #include "common.h"
 #include "game_logic.h"
 
+#define INFO_MSG 99
+
 void display_party_info(int party) {
     printf("\nYou are playing as: %s\n", PartyNames[party]);
 }
@@ -11,20 +13,18 @@ int select_card(GameMessage *msg) {
     while(1) {
         printf("\nSelect a card to play (1-%d): ", msg->hand_size);
         if(scanf("%d",  &choice) != 1) {
-            while(getchar() != '\n');
+            while(getchar() != '\n'); // flush invalid input
             printf("Invalid input. Please enter a number \n");
             continue;
         }
 
-        choice--;
+        choice--; // convert input from 1-based to 0-based index
 
-        if(choice > 0 && choice < msg->hand_size) {
+        if(choice >= 0 && choice < msg->hand_size) {  // fixed condition to allow 0 index
             return choice;
         }
 
-        printf("Invalid choice. please selected a card between 1 and %d \n", msg->hand_size);
-
-
+        printf("Invalid choice. Please select a card between 1 and %d \n", msg->hand_size);
     }
 }
 
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     int history_size = 0;
 
     if(argc != 2) {
-        printf("Usage: %s <server_ip>", argv[0]);
+        printf("Usage: %s <server_ip>\n", argv[0]);
         return -1;
     }
 
@@ -63,108 +63,94 @@ int main(int argc, char *argv[]) {
     printf("Connected to the server. Waiting for the game to start!\n");
 
     while(!game_over) {
-        
+
         if(received_message(sock, &msg) <= 0) {
-            printf("Error receiving message from server. \n");
+            printf("Error receiving message from server.\n");
             break;
         }
+
         switch (msg.type) {
             case START_INIT:
                 printf("\n%s\n", msg.message);
-
                 display_party_info(msg.party);
-
                 printf("\nInitial Public Opinion:\n");
                 display_opinion_bar(msg.public_opinion);
-
                 display_hand(&msg);
                 break;
-                
+
             case CARD_SELECTION:
-                printf("\033[2J\033[H");
-
+                printf("\033[2J\033[H");  // Clear screen
                 printf("\n=== Round %d ===\n", msg.round);
-
                 printf("\nCurrent Public Opinion:\n");
                 display_opinion_bar(msg.public_opinion);
 
-                if (history_size > 0) {
+                if(history_size > 0) {
                     printf("\nMove History:\n");
-                    for (int i = 0; i < history_size; i++) {
-                        printf("Round %d: You played %s, Opponent played %s\n", 
-                               i + 1, 
-                               CardNames[round_history[i][0]], 
-                               CardNames[round_history[i][1]]);
+                    for(int i = 0; i < history_size; i++) {
+                        printf("Round %d: You played %s, Opponent played %s\n",
+                            i + 1,
+                            CardNames[round_history[i][0]],
+                            CardNames[round_history[i][1]]);
                     }
                 }
 
                 display_hand(&msg);
-
                 int choice = select_card(&msg);
                 msg.selected_card = choice;
-
                 send_message(sock, &msg);
                 break;
-                
+
             case CARD_REVEAL:
                 round_history[history_size][0] = msg.selected_card;
                 round_history[history_size][1] = msg.opponent_card;
-
                 printf("\nCards Revealed:\n");
                 printf("You played: %s\n", CardNames[msg.selected_card]);
                 printf("Opponent played: %s\n", CardNames[msg.opponent_card]);
-
                 printf("\nResolving round...\n");
                 break;
-                
+
             case ROUND_RESULT:
                 history_size++;
-
                 printf("\nRound %d Result:\n", msg.round);
-
-                if (msg.opinion_change > 0) {
+                if(msg.opinion_change > 0) {
                     printf("Public opinion shifted in your favor by %d%%!\n", msg.opinion_change);
-                } else if (msg.opinion_change < 0) {
+                } else if(msg.opinion_change < 0) {
                     printf("Public opinion shifted against you by %d%%!\n", -msg.opinion_change);
                 } else {
                     printf("Public opinion remained unchanged.\n");
                 }
-
                 printf("\nUpdated Public Opinion:\n");
                 display_opinion_bar(msg.public_opinion);
-
                 printf("\n%s\n", msg.message);
-
                 printf("\nYour updated hand:\n");
                 display_hand(&msg);
-
                 printf("\nPress Enter to continue to the next round...");
-                getchar();
-                getchar();
+                while(getchar() != '\n'); // flush leftover newline in buffer
+                getchar(); // wait for enter
                 break;
-                
+
             case GAME_OVER:
                 printf("\n=== GAME OVER ===\n");
                 printf("\nFinal Public Opinion:\n");
                 display_opinion_bar(msg.public_opinion);
-                
                 printf("\n%s\n", msg.message);
-
                 game_over = 1;
                 break;
-                
+
             case ERROR:
                 printf("\nERROR: %s\n", msg.message);
                 break;
-                
+
+            case INFO_MSG: // Handle opponent locked in card message here
+                printf("\n[Info]: %s\n", msg.message);
+                break;
+
             default:
                 printf("\nUnknown message type received: %d\n", msg.type);
                 break;
         }
     }
-    
-    close(sock);
-    
-    return 0;
 
+    close(sock);
+    return 0;
 }
