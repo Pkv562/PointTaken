@@ -21,14 +21,15 @@ typedef struct {
 } GameState;
 
 void initialize_game(GameState *game) {
-    
     srand(time(NULL));
 
     create_deck(game->deck, &game->deck_size);
     shuffle_deck(game->deck, game->deck_size);
 
     game->p1_party = rand() % PARTY_COUNT;
-    game->p2_party = rand() % PARTY_COUNT;
+    do {
+        game->p2_party = rand() % PARTY_COUNT;
+    } while (game->p2_party == game->p1_party);
 
     draw_starting_cards(game->deck, &game->deck_size, game->p1_hand, &game->p1_hand_size);
     draw_starting_cards(game->deck, &game->deck_size, game->p2_hand, &game->p2_hand_size);
@@ -43,7 +44,6 @@ void initialize_game(GameState *game) {
     game->p2_has_attacked = 0;
     game->p1_attacked = 0;
     game->p2_attacked = 0;
-
 }
 
 void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
@@ -86,6 +86,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p1_msg.public_opinion = game->public_opinion;
     p1_msg.round = game->round;
     p1_msg.hand_size = game->p1_hand_size;
+    p1_msg.party = game->p1_party;
 
     for(int i = 0; i < game->p1_hand_size; i++) {
         p1_msg.cards[i] = game->p1_hand[i];
@@ -95,6 +96,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.hand_size = game->p2_hand_size;
+    p2_msg.party = game->p2_party;
 
     for(int i = 0; i < game->p2_hand_size; i++) {
         p2_msg.cards[i] = game->p2_hand[i];
@@ -185,6 +187,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p1_msg.round = game->round;
     p1_msg.opinion_change = opinion_change;
     p1_msg.hand_size = game->p1_hand_size;
+    p1_msg.party = game->p1_party;
 
     for(int i = 0; i < game->p1_hand_size; i++) {
         p1_msg.cards[i] = game->p1_hand[i];
@@ -198,29 +201,27 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     p2_msg.round = game->round;
     p2_msg.opinion_change = -opinion_change;
     p2_msg.hand_size = game->p2_hand_size;
+    p2_msg.party = game->p2_party;
 
     for(int i = 0; i < game->p2_hand_size; i++) {
         p2_msg.cards[i] = game->p2_hand[i];
     }
 
     sprintf(p2_msg.message, "Round %d complete. Public Opinion changed by %d%%.",
-    game->round, opinion_change);
+    game->round, -opinion_change);
 
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
 
     game->round++;
-
-
 }
 
 int check_game_over(GameState* game) {
-
     if(game->public_opinion <= MIN_OPINION || game->public_opinion >= MAX_OPINION) {
         return 1;
     }
 
-    if(game->round == MAX_ROUNDS) {
+    if(game->round > MAX_ROUNDS) {
         return 1;
     }
 
@@ -237,18 +238,38 @@ void send_game_over(GameState* game, int p1_socket, int p2_socket) {
     p1_msg.type = GAME_OVER;
     p1_msg.public_opinion = game->public_opinion;
     p1_msg.game_over = 1;
+    p1_msg.party = game->p1_party;
+    
+    if (game->public_opinion > 50) {
+        sprintf(p1_msg.message, "Congratulations! %s has won the debate with %d%% public support!", 
+                PartyNames[game->p1_party], game->public_opinion);
+    } else if (game->public_opinion < 50) {
+        sprintf(p1_msg.message, "%s has lost the debate with only %d%% public support.", 
+                PartyNames[game->p1_party], game->public_opinion);
+    } else {
+        sprintf(p1_msg.message, "The debate ended in a tie with public opinion exactly divided!");
+    }
 
     p2_msg.type = GAME_OVER;
     p2_msg.public_opinion = game->public_opinion;
     p2_msg.game_over = 1;
+    p2_msg.party = game->p2_party;
+    
+    if (game->public_opinion < 50) {
+        sprintf(p2_msg.message, "Congratulations! %s has won the debate with %d%% public support!", 
+                PartyNames[game->p2_party], 100 - game->public_opinion);
+    } else if (game->public_opinion > 50) {
+        sprintf(p2_msg.message, "%s has lost the debate with only %d%% public support.", 
+                PartyNames[game->p2_party], 100 - game->public_opinion);
+    } else {
+        sprintf(p2_msg.message, "The debate ended in a tie with public opinion exactly divided!");
+    }
 
     send_message(p1_socket, &p1_msg);
     send_message(p2_socket, &p2_msg);
-
 }
 
 int main() {
-
     int server_fd, p1_socket, p2_socket;
     struct sockaddr_in address;
     int opt = 1;
@@ -256,7 +277,7 @@ int main() {
     GameState game;
 
     if((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("Socked Failed");
+        perror("Socket Failed");
         exit(EXIT_FAILURE);
     }
 
@@ -315,6 +336,4 @@ int main() {
     printf("Game over!\n");
 
     return 0;
-
-
 }

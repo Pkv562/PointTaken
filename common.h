@@ -59,16 +59,16 @@ typedef enum {
 } CardType;
 
 const char* CardNames[CARD_COUNT] = {
-    "Appeal to Emotion",
-    "Use Statistics",
-    "Attack Opponent",
-    "Change Topic",
-    "Personal Story",
-    "Distrust Data",
-    "Fact Check",
+    "Appeal",
+    "Stats",
+    "OppAtt",
+    "Topic",
+    "Story",
+    "Distrst",
+    "FactChk",
     "Attack",
     "Defend",
-    "Stay Silent"
+    "Silent"
 };
 
 const char* CardDescriptions[CARD_COUNT] = {
@@ -107,7 +107,7 @@ int received_message(int socket, GameMessage* msg) {
 }
 
 void display_opinion_bar(int opinion) {
-    printf("P1 [%d] [", opinion);
+    printf("\n         P1 [%d] [", opinion);
     
     int p1_bars = opinion / 10;
     int p2_bars = 10 - p1_bars;
@@ -120,14 +120,98 @@ void display_opinion_bar(int opinion) {
         printf("-");
     }
     
-    printf("] P2 [%d]\n", 100 - opinion);
+    printf("] P2 [%d]\n\n", 100 - opinion);
+}
+
+void display_terminal_header(int round, int (*round_history)[2], int history_size) {
+    printf("---------------\n");
+    printf("|   ROUND %-3d |\n", round);
+    printf("---------------\n");
+    printf("| HISTORY     |\n");
+    
+    if (history_size > 0) {
+        int display_count = history_size > 3 ? 3 : history_size;
+        for (int i = history_size - display_count; i < history_size; i++) {
+            printf("| > P1 %-7s |\n", CardNames[round_history[i][0]]);
+            printf("| > P2 %-7s |\n", CardNames[round_history[i][1]]);
+        }
+    } else {
+        printf("| > No moves   |\n");
+        printf("| > yet        |\n");
+    }
+    
+    printf("|             |\n");
+    printf("---------------\n");
+}
+
+void display_party_boxes(int player_party, int opponent_party) {
+    printf("\n     ----------------   |   ----------------\n");
+    printf("     | %-14s |   |   | %-14s |\n", PartyNames[player_party], PartyNames[opponent_party]);
+    printf("     ----------------   |   ----------------\n");
+}
+
+void display_played_cards(int player_card, int opponent_card) {
+    if (player_card >= 0 && opponent_card >= 0) {
+        printf("                        |\n");
+        printf("        ----------      |      ----------\n");
+        printf("        |        |      |      |        |\n");
+        printf("        | %-6s |      |      | %-6s |\n", 
+               CardNames[player_card], CardNames[opponent_card]);
+        printf("        |  CARD  |      |      |  CARD  |\n");
+        printf("        |        |      |      |        |\n");
+        printf("        ----------      |      ----------\n");
+        printf("                        |\n");
+    } else {
+        printf("                        |\n");
+        printf("                        |\n");
+        printf("                        |\n");
+        printf("                        |\n");
+        printf("                        |\n");
+    }
 }
 
 void display_hand(GameMessage *msg) {
-    printf("\nYour cards:\n");
-    for (int i = 0; i < msg->hand_size; i++) {
-        printf("%d. %s - %s\n", i + 1, CardNames[msg->cards[i]], CardDescriptions[msg->cards[i]]);
+    printf("--------- --------- --------- --------- ---------\n");
+    printf("|       | |       | |       | |       | |       |\n");
+    
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (i < msg->hand_size) {
+            const char* card_name = CardNames[msg->cards[i]];
+            int len = strlen(card_name);
+            if (len > 7) {
+                char shortened[8];
+                strncpy(shortened, card_name, 7);
+                shortened[7] = '\0';
+                printf("| %-7s ", shortened);
+            } else {
+                printf("| %-7s ", card_name);
+            }
+        } else {
+            printf("|        ");
+        }
     }
+    printf("|\n");
+    
+    for (int i = 0; i < MAX_CARDS; i++) {
+        if (i < msg->hand_size) {
+            printf("| CARD %-2d ", i + 1);
+        } else {
+            printf("|        ");
+        }
+    }
+    printf("|\n");
+    
+    printf("|       | |       | |       | |       | |       |\n");
+    printf("--------- --------- --------- --------- ---------\n");
+}
+
+void display_full_terminal(GameMessage *msg, int player_party, int (*round_history)[2], int history_size, int player_card, int opponent_card) {
+    printf("\033[2J\033[H"); 
+    display_terminal_header(msg->round, round_history, history_size);
+    display_opinion_bar(msg->public_opinion);
+    display_party_boxes(player_party, msg->party == player_party ? (player_party + 1) % PARTY_COUNT : msg->party);
+    display_played_cards(player_card, opponent_card);
+    display_hand(msg);
 }
 
 #endif
