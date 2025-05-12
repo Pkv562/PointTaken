@@ -64,7 +64,7 @@ void send_starting_game(GameState * game, int p1_socket, int p2_socket) {
 
     p2_msg.type = START_INIT;
     p2_msg.party = game->p2_party;
-    p2_msg.public_opinion = game->public_opinion;
+    p2_msg.public_opinion = 100 - game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.hand_size = game->p2_hand_size;
     p2_msg.game_over = 0;
@@ -93,7 +93,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     }
 
     p2_msg.type = CARD_SELECTION;
-    p2_msg.public_opinion = game->public_opinion;
+    p2_msg.public_opinion = 100 - game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.hand_size = game->p2_hand_size;
     p2_msg.party = game->p2_party;
@@ -197,7 +197,7 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
     game->round, opinion_change);
 
     p2_msg.type = ROUND_RESULT;
-    p2_msg.public_opinion = game->public_opinion;
+    p2_msg.public_opinion = 100 - game->public_opinion;
     p2_msg.round = game->round;
     p2_msg.opinion_change = -opinion_change;
     p2_msg.hand_size = game->p2_hand_size;
@@ -251,7 +251,7 @@ void send_game_over(GameState* game, int p1_socket, int p2_socket) {
     }
 
     p2_msg.type = GAME_OVER;
-    p2_msg.public_opinion = game->public_opinion;
+    p2_msg.public_opinion = 100 - game->public_opinion;
     p2_msg.game_over = 1;
     p2_msg.party = game->p2_party;
     
