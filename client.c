@@ -91,9 +91,11 @@ int main(int argc, char *argv[]) {
                 break;
                 
             case ROUND_RESULT:
-                round_history[history_size][0] = player_card;
-                round_history[history_size][1] = opponent_card;
-                history_size++;
+                if (history_size < MAX_ROUNDS) {
+                    round_history[history_size][0] = player_card;
+                    round_history[history_size][1] = opponent_card;
+                    history_size++;
+                }
                 
                 display_full_terminal(&msg, player_party, round_history, history_size, player_card, opponent_card);
                 
@@ -108,12 +110,17 @@ int main(int argc, char *argv[]) {
                 printf("\n%s\n", msg.message);
                 
                 printf("\nPress Enter to continue to the next round...");
-                getchar();
+                while (getchar() != '\n');
                 getchar();
                 break;
                 
             case GAME_OVER:
-                display_full_terminal(&msg, player_party, round_history, history_size, player_card, opponent_card);
+                if (player_party >= 0 && player_party < PARTY_COUNT) {
+                    display_full_terminal(&msg, player_party, round_history, history_size, player_card, opponent_card);
+                } else {
+             
+                    printf("\033[2J\033[H"); 
+                }
                 
                 printf("\n=== GAME OVER ===\n");
                 if (msg.public_opinion > 50) {
@@ -137,6 +144,8 @@ int main(int argc, char *argv[]) {
                 break;
         }
     }
+    
+    usleep(100000);
     
     close(sock);
     return 0;

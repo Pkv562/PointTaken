@@ -164,14 +164,19 @@ void process_round(GameState * game, int p1_socket, int p2_socket) {
         game->public_opinion = MAX_OPINION;
     }
 
+    if (game->p1_selected_card < game->p1_hand_size - 1) {
     for(int i = game->p1_selected_card; i < game->p1_hand_size - 1; i++) {
         game->p1_hand[i] = game->p1_hand[i+1];
+    	}
     }
     game->p1_hand_size--;
 
+    if (game->p2_selected_card < game->p2_hand_size - 1) {
     for(int i = game->p2_selected_card; i < game->p2_hand_size - 1; i++) {
         game->p2_hand[i] = game->p2_hand[i+1];
+    	}
     }
+    
     game->p2_hand_size--;
 
     if(game->deck_size > 0) {
