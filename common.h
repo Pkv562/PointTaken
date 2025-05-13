@@ -87,7 +87,8 @@ const char* CardDescriptions[CARD_COUNT] = {
 typedef struct {
     int type;                
     int party;                
-    int public_opinion;      
+    int public_opinion;    
+    int opponent_party;  
     int round;               
     int cards[MAX_CARDS]; 
     int hand_size;           
@@ -209,7 +210,7 @@ void display_full_terminal(GameMessage *msg, int player_party, int (*round_histo
     printf("\033[2J\033[H"); 
     display_terminal_header(msg->round, round_history, history_size);
     display_opinion_bar(msg->public_opinion);
-    display_party_boxes(player_party, msg->party == player_party ? (player_party + 1) % PARTY_COUNT : msg->party);
+    display_party_boxes(player_party, msg->opponent_party);
     display_played_cards(player_card, opponent_card);
     display_hand(msg);
 }
