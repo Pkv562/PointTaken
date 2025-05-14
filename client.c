@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
                 
             case GAME_OVER:
                 if (player_party >= 0 && player_party < PARTY_COUNT) {
-                    display_full_terminal(&msg, player_party, round_history, history_size, player_card, opponent_card);
+                    // display_full_terminal(&msg, player_party, round_history, history_size, player_card, opponent_card);
                 } else {
              
                     printf("\033[2J\033[H"); 
